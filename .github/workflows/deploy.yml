@@ -1,0 +1,53 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main  # Runs when code is pushed to main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Build Docker Image
+        run: |
+          docker build -t my-python-app .
+
+      - name: Save Docker Image as Tar
+        run: |
+          docker save my-python-app -o my-python-app.tar
+
+      - name: Copy Docker Image to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ${{ secrets.AWS_USERNAME }}
+          key: ${{ secrets.AWS_PRIVATE_KEY }}
+          source: "my-python-app.tar"
+          target: "/home/ec2-user/"
+
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ${{ secrets.AWS_USERNAME }}
+          key: ${{ secrets.AWS_PRIVATE_KEY }}
+          script: |
+            sudo docker load -i /home/ec2-user/my-python-app.tar
+            sudo docker stop my-python-container || true
+            sudo docker rm my-python-container || true
+            sudo docker run -d --name my-python-container -p 5000:5000 my-python-app
