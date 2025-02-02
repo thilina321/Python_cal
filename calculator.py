@@ -1,26 +1,12 @@
 def calculator():
-    numbers = list(map(float, input("Enter numbers separated by space: ").split()))
-    operation = input("Enter operation (+, -, *, /): ")
-
-    if operation == "+":
-        result = sum(numbers)
-    elif operation == "-":
-        result = numbers[0] - sum(numbers[1:])
-    elif operation == "*":
-        result = 1
-        for num in numbers:
-            result *= num
-    elif operation == "/":
-        result = numbers[0]
-        for num in numbers[1:]:
-            if num == 0:
-                print("Error: Division by zero")
-                return
-            result /= num
-    else:
-        print("Invalid operation")
-        return
-
-    print("Result:", result)
+    try:
+        expression = input("Enter calculation (e.g., 10 + 5 - 3 * 2 / 4): ")
+        result = eval(expression)
+        print("Result:", result)
+    except ZeroDivisionError:
+        print("Error: Division by zero")
+    except Exception as e:
+        print("Invalid input:", e)
 
 calculator()
+
